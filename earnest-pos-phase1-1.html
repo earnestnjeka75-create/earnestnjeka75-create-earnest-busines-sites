@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnest POS - Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#17202a}
+.app{display:flex;min-height:100vh}
+.sidebar{width:245px;background:#17202a;color:white;padding:22px 15px;position:fixed;top:0;bottom:0;left:0}
+.brand{font-size:25px;font-weight:800;margin-bottom:6px}
+.subtitle{font-size:12px;color:#bdc3c7;margin-bottom:28px}
+.nav button{width:100%;padding:13px 14px;border:0;background:transparent;color:#ecf0f1;text-align:left;border-radius:9px;margin-bottom:5px;font-size:15px;cursor:pointer}
+.nav button:hover,.nav button.active{background:#2c3e50}
+.main{margin-left:245px;width:calc(100% - 245px);padding:25px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+h1{font-size:28px}
+.user{background:white;padding:10px 15px;border-radius:10px;box-shadow:0 2px 10px #00000010}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.card{background:white;padding:20px;border-radius:14px;box-shadow:0 2px 10px #0000000c}
+.card small{color:#68737d}
+.card strong{display:block;font-size:25px;margin-top:8px}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.panel{background:white;padding:20px;border-radius:14px;box-shadow:0 2px 10px #0000000c;margin-bottom:18px}
+.panel h2{font-size:18px;margin-bottom:15px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #edf0f2;font-size:14px}
+th{color:#68737d}
+.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}
+.primary{background:#e67e22;color:white}
+.secondary{background:#ecf0f1;color:#17202a}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select{width:100%;padding:11px;border:1px solid #d7dce0;border-radius:8px}
+.form .full{grid-column:1/-1}
+.hidden{display:none}
+.alert{padding:12px;background:#fff4e6;border-left:4px solid #e67e22;border-radius:8px;margin-bottom:15px}
+.empty{text-align:center;color:#7f8c8d;padding:25px}
+@media(max-width:900px){
+ .sidebar{width:190px}.main{margin-left:190px;width:calc(100% - 190px)}
+ .cards{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+ .sidebar{position:static;width:100%;height:auto}.app{display:block}.main{margin-left:0;width:100%;padding:15px}
+ .cards{grid-template-columns:1fr 1fr}.top{gap:10px;align-items:flex-start}.user{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">EARNEST POS</div>
+  <div class="subtitle">Smart Business Management</div>
+  <div class="nav">
+    <button class="active" onclick="show('dashboard',this)">📊 Dashboard</button>
+    <button onclick="show('products',this)">📦 Products & Inventory</button>
+    <button onclick="show('sales',this)">🧾 Sales & Receipts</button>
+    <button onclick="show('expenses',this)">💵 Expenses</button>
+    <button onclick="show('reports',this)">📈 Reports</button>
+    <button onclick="show('users',this)">👤 Staff & Users</button>
+    <button onclick="show('settings',this)">⚙️ Settings</button>
+  </div>
+</aside>
+
+<main class="main">
+<section id="dashboard">
+  <div class="top"><div><h1>Dashboard</h1><p>Welcome to Earnest POS</p></div><div class="user">Administrator</div></div>
+  <div id="lowStock"></div>
+  <div class="cards">
+    <div class="card"><small>Today's Sales</small><strong id="salesTotal">KSh 0</strong></div>
+    <div class="card"><small>Products</small><strong id="productCount">0</strong></div>
+    <div class="card"><small>Transactions</small><strong id="transactionCount">0</strong></div>
+    <div class="card"><small>Today's Profit</small><strong id="profitTotal">KSh 0</strong></div>
+  </div>
+  <div class="grid">
+    <div class="panel"><h2>Recent Sales</h2><div id="recentSales" class="empty">No sales recorded yet.</div></div>
+    <div class="panel"><h2>Stock Summary</h2><div id="stockSummary" class="empty">Add products to see stock.</div></div>
+  </div>
+</section>
+
+<section id="products" class="hidden">
+  <div class="top"><h1>Products & Inventory</h1><button class="btn primary" onclick="showAddProduct()">+ Add Product</button></div>
+  <div id="productForm" class="panel hidden">
+    <h2>Add Product</h2>
+    <div class="form">
+      <input id="pName" placeholder="Product name">
+      <input id="pCategory" placeholder="Category">
+      <input id="pBuy" type="number" placeholder="Buying price">
+      <input id="pSell" type="number" placeholder="Selling price">
+      <input id="pStock" type="number" placeholder="Opening stock">
+      <input id="pMin" type="number" placeholder="Low-stock level (e.g. 5)">
+      <div class="full"><button class="btn primary" onclick="addProduct()">Save Product</button> <button class="btn secondary" onclick="hideProductForm()">Cancel</button></div>
+    </div>
+  </div>
+  <div class="panel">
+    <table><thead><tr><th>Product</th><th>Category</th><th>Buy</th><th>Sell</th><th>Stock</th><th>Status</th></tr></thead>
+    <tbody id="productTable"><tr><td colspan="6" class="empty">No products yet.</td></tr></tbody></table>
+  </div>
+</section>
+
+<section id="sales" class="hidden">
+  <div class="top"><h1>Sales & Receipts</h1></div>
+  <div class="grid">
+    <div class="panel">
+      <h2>New Sale</h2>
+      <div class="form">
+        <select id="saleProduct"></select>
+        <input id="saleQty" type="number" min="1" value="1" placeholder="Quantity">
+        <select id="payment"><option>Cash</option><option>M-Pesa</option><option>Card</option></select>
+        <div><button class="btn primary" onclick="recordSale()">Complete Sale</button></div>
+      </div>
+    </div>
+    <div class="panel"><h2>How it works</h2><p>Select a product, enter quantity and payment method. Completing the sale reduces stock and records the transaction.</p></div>
+  </div>
+  <div class="panel"><h2>Sales History</h2><div id="salesHistory" class="empty">No sales yet.</div></div>
+</section>
+
+<section id="expenses" class="hidden">
+  <div class="top"><h1>Expenses</h1></div>
+  <div class="panel">
+    <div class="form">
+      <input id="eName" placeholder="Expense description">
+      <input id="eAmount" type="number" placeholder="Amount (KSh)">
+      <div><button class="btn primary" onclick="addExpense()">Save Expense</button></div>
+    </div>
+  </div>
+  <div class="panel"><h2>Expense History</h2><div id="expenseHistory" class="empty">No expenses recorded.</div></div>
+</section>
+
+<section id="reports" class="hidden">
+  <div class="top"><h1>Reports</h1></div>
+  <div class="cards">
+    <div class="card"><small>Total Revenue</small><strong id="reportRevenue">KSh 0</strong></div>
+    <div class="card"><small>Gross Profit</small><strong id="reportProfit">KSh 0</strong></div>
+    <div class="card"><small>Expenses</small><strong id="reportExpenses">KSh 0</strong></div>
+    <div class="card"><small>Net Profit</small><strong id="reportNet">KSh 0</strong></div>
+  </div>
+  <div class="panel"><h2>Business Summary</h2><p>This Phase 1 version stores demo data in your browser. Later we can connect it to a secure online database.</p></div>
+</section>
+
+<section id="users" class="hidden">
+  <div class="top"><h1>Staff & Users</h1></div>
+  <div class="panel"><h2>Administrator</h2><p>Role: Full Access</p><p>Phase 2 will add cashier accounts, permissions and audit trails.</p></div>
+</section>
+
+<section id="settings" class="hidden">
+  <div class="top"><h1>Settings</h1></div>
+  <div class="panel">
+    <h2>Business Settings</h2>
+    <div class="form">
+      <input id="businessName" placeholder="Business name" value="Earnest POS">
+      <input id="currency" value="KSh" disabled>
+      <div><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+const key='earnestPOS_v1';
+let db=JSON.parse(localStorage.getItem(key)||'{"products":[],"sales":[],"expenses":[],"settings":{"businessName":"Earnest POS"}}');
+
+function save(){localStorage.setItem(key,JSON.stringify(db));render();}
+function money(n){return 'KSh '+Number(n||0).toLocaleString('en-KE',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function show(id,btn){
+ document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+ document.getElementById(id).classList.remove('hidden');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+ if(btn)btn.classList.add('active');
+ render();
+}
+function showAddProduct(){document.getElementById('productForm').classList.remove('hidden')}
+function hideProductForm(){document.getElementById('productForm').classList.add('hidden')}
+function addProduct(){
+ let name=document.getElementById('pName').value.trim();
+ let category=document.getElementById('pCategory').value.trim()||'General';
+ let buy=+document.getElementById('pBuy').value, sell=+document.getElementById('pSell').value;
+ let stock=+document.getElementById('pStock').value, min=+document.getElementById('pMin').value||5;
+ if(!name||sell<0||buy<0||stock<0){alert('Please enter valid product details.');return}
+ db.products.push({id:Date.now(),name,category,buy,sell,stock,min});
+ ['pName','pCategory','pBuy','pSell','pStock','pMin'].forEach(x=>document.getElementById(x).value='');
+ hideProductForm();save();
+}
+function recordSale(){
+ let id=+document.getElementById('saleProduct').value;
+ let qty=+document.getElementById('saleQty').value;
+ let payment=document.getElementById('payment').value;
+ let p=db.products.find(x=>x.id===id);
+ if(!p||qty<1){alert('Select a product and quantity.');return}
+ if(qty>p.stock){alert('Not enough stock available.');return}
+ p.stock-=qty;
+ db.sales.unshift({date:new Date().toISOString(),product:p.name,qty,amount:p.sell*qty,cost:p.buy*qty,payment});
+ document.getElementById('saleQty').value=1;
+ save();alert('Sale recorded successfully.');
+}
+function addExpense(){
+ let name=document.getElementById('eName').value.trim(), amount=+document.getElementById('eAmount').value;
+ if(!name||amount<=0){alert('Enter a valid expense.');return}
+ db.expenses.unshift({date:new Date().toISOString(),name,amount});
+ document.getElementById('eName').value='';document.getElementById('eAmount').value='';save();
+}
+function saveSettings(){db.settings.businessName=document.getElementById('businessName').value||'Earnest POS';save();alert('Settings saved.');}
+function render(){
+ let revenue=db.sales.reduce((a,s)=>a+s.amount,0);
+ let profit=db.sales.reduce((a,s)=>a+(s.amount-s.cost),0);
+ let expenses=db.expenses.reduce((a,e)=>a+e.amount,0);
+ document.getElementById('salesTotal').textContent=money(revenue);
+ document.getElementById('productCount').textContent=db.products.length;
+ document.getElementById('transactionCount').textContent=db.sales.length;
+ document.getElementById('profitTotal').textContent=money(profit);
+ document.getElementById('reportRevenue').textContent=money(revenue);
+ document.getElementById('reportProfit').textContent=money(profit);
+ document.getElementById('reportExpenses').textContent=money(expenses);
+ document.getElementById('reportNet').textContent=money(profit-expenses);
+
+ let low=db.products.filter(p=>p.stock<=p.min);
+ document.getElementById('lowStock').innerHTML=low.length?`<div class="alert">⚠️ <b>${low.length} product(s)</b> are at or below their low-stock level.</div>`:'';
+ document.getElementById('productTable').innerHTML=db.products.length?db.products.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.category)}</td><td>${money(p.buy)}</td><td>${money(p.sell)}</td><td>${p.stock}</td><td>${p.stock<=p.min?'⚠️ Low':'✅ OK'}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">No products yet.</td></tr>';
+ document.getElementById('saleProduct').innerHTML=db.products.length?db.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.sell)} (${p.stock} in stock)</option>`).join(''):'<option value="">No products available</option>';
+ document.getElementById('recentSales').innerHTML=db.sales.length?`<table><tr><th>Product</th><th>Qty</th><th>Amount</th></tr>${db.sales.slice(0,6).map(s=>`<tr><td>${esc(s.product)}</td><td>${s.qty}</td><td>${money(s.amount)}</td></tr>`).join('')}</table>`:'<div class="empty">No sales recorded yet.</div>';
+ document.getElementById('salesHistory').innerHTML=db.sales.length?`<table><tr><th>Date</th><th>Product</th><th>Qty</th><th>Payment</th><th>Amount</th></tr>${db.sales.map(s=>`<tr><td>${new Date(s.date).toLocaleString()}</td><td>${esc(s.product)}</td><td>${s.qty}</td><td>${s.payment}</td><td>${money(s.amount)}</td></tr>`).join('')}</table>`:'<div class="empty">No sales yet.</div>';
+ document.getElementById('expenseHistory').innerHTML=db.expenses.length?`<table><tr><th>Date</th><th>Description</th><th>Amount</th></tr>${db.expenses.map(e=>`<tr><td>${new Date(e.date).toLocaleString()}</td><td>${esc(e.name)}</td><td>${money(e.amount)}</td></tr>`).join('')}</table>`:'<div class="empty">No expenses recorded.</div>';
+ let stockTotal=db.products.reduce((a,p)=>a+p.stock,0);
+ document.getElementById('stockSummary').innerHTML=db.products.length?`<p><b>${db.products.length}</b> products</p><p><b>${stockTotal}</b> total units in stock</p><p><b>${low.length}</b> low-stock items</p>`:'<div class="empty">Add products to see stock.</div>';
+ document.getElementById('businessName').value=db.settings.businessName;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+render();
+</script>
+</body>
+</html>
